@@ -131,4 +131,18 @@ The project controls 12 GPIO pins (4 directions × 3 lights):
 - **South**: PIN_6 (red), PIN_7 (yellow), PIN_8 (green)
 - **West**: PIN_9 (red), PIN_10 (yellow), PIN_11 (green)
 
-Cycle: North-South green (10s) → yellow (3s) → all red (1s) → East-West green (10s) → yellow (3s) → all red (1s) → repeat
+**German Traffic Light Sequence:**
+
+Each direction follows the authentic German traffic light cycle:
+1. **Red + Yellow** (1s) - Preparation phase ("get ready to go")
+2. **Green** (10s) - Go
+3. **Yellow only** (3s) - Prepare to stop
+4. **Red** - Stop
+5. **All Red** (1s) - Safety clearance before next direction
+
+**Full intersection cycle:**
+- North-South: Red+Yellow (1s) → Green (10s) → Yellow (3s) → All Red (1s)
+- East-West: Red+Yellow (1s) → Green (10s) → Yellow (3s) → All Red (1s)
+- Repeat
+
+The distinctive **Red + Yellow** phase before green is the key characteristic of German traffic lights, signaling drivers to prepare to start moving.

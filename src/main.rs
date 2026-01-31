@@ -1,4 +1,7 @@
-//! Simple 4-way traffic light controller on Raspberry Pi Pico using Embassy + Rust
+//! German-style 4-way traffic light controller on Raspberry Pi Pico using Embassy + Rust
+//!
+//! Implements authentic German traffic light sequence with Red+Yellow preparation phase:
+//! Red → Red+Yellow (1s) → Green (10s) → Yellow (3s) → Red → All Red safety (1s)
 #![no_std]
 #![no_main]
 #![feature(impl_trait_in_assoc_type)]
@@ -31,27 +34,46 @@ async fn main(_spawner: Spawner) {
     let mut west_yellow  = Output::new(p.PIN_10, Level::Low);
     let mut west_green   = Output::new(p.PIN_11, Level::Low);
 
-    // Initial state: North-South green, East-West red
-    set_ns_green(
+    // Initial state: All red
+    all_red(
         &mut north_red, &mut north_yellow, &mut north_green,
         &mut south_red, &mut south_yellow, &mut south_green,
         &mut east_red, &mut east_yellow, &mut east_green,
         &mut west_red, &mut west_yellow, &mut west_green,
     ).await;
 
-    // Main loop: cycle through phases
+    // Main loop: German traffic light cycle
     loop {
-        // North-South green for 10 seconds
+        // === NORTH-SOUTH PHASE ===
+
+        // Red+Yellow (German "get ready" phase, 1 sec)
+        set_ns_red_yellow(
+            &mut north_red, &mut north_yellow, &mut north_green,
+            &mut south_red, &mut south_yellow, &mut south_green,
+            &mut east_red, &mut east_yellow, &mut east_green,
+            &mut west_red, &mut west_yellow, &mut west_green,
+        ).await;
+        Timer::after_secs(1).await;
+
+        // North-South green (10 sec)
+        set_ns_green(
+            &mut north_red, &mut north_yellow, &mut north_green,
+            &mut south_red, &mut south_yellow, &mut south_green,
+            &mut east_red, &mut east_yellow, &mut east_green,
+            &mut west_red, &mut west_yellow, &mut west_green,
+        ).await;
         Timer::after_secs(10).await;
 
-        // North-South yellow (3 sec)
+        // North-South yellow only (3 sec)
         set_ns_yellow(
             &mut north_red, &mut north_yellow, &mut north_green,
             &mut south_red, &mut south_yellow, &mut south_green,
+            &mut east_red, &mut east_yellow, &mut east_green,
+            &mut west_red, &mut west_yellow, &mut west_green,
         ).await;
         Timer::after_secs(3).await;
 
-        // All red (safety overlap, 1 sec)
+        // All red (safety clearance, 1 sec)
         all_red(
             &mut north_red, &mut north_yellow, &mut north_green,
             &mut south_red, &mut south_yellow, &mut south_green,
@@ -60,7 +82,18 @@ async fn main(_spawner: Spawner) {
         ).await;
         Timer::after_secs(1).await;
 
-        // East-West green for 10 seconds
+        // === EAST-WEST PHASE ===
+
+        // Red+Yellow (German "get ready" phase, 1 sec)
+        set_ew_red_yellow(
+            &mut east_red, &mut east_yellow, &mut east_green,
+            &mut west_red, &mut west_yellow, &mut west_green,
+            &mut north_red, &mut north_yellow, &mut north_green,
+            &mut south_red, &mut south_yellow, &mut south_green,
+        ).await;
+        Timer::after_secs(1).await;
+
+        // East-West green (10 sec)
         set_ew_green(
             &mut east_red, &mut east_yellow, &mut east_green,
             &mut west_red, &mut west_yellow, &mut west_green,
@@ -69,14 +102,16 @@ async fn main(_spawner: Spawner) {
         ).await;
         Timer::after_secs(10).await;
 
-        // East-West yellow (3 sec)
+        // East-West yellow only (3 sec)
         set_ew_yellow(
             &mut east_red, &mut east_yellow, &mut east_green,
             &mut west_red, &mut west_yellow, &mut west_green,
+            &mut north_red, &mut north_yellow, &mut north_green,
+            &mut south_red, &mut south_yellow, &mut south_green,
         ).await;
         Timer::after_secs(3).await;
 
-        // All red again (1 sec)
+        // All red (safety clearance, 1 sec)
         all_red(
             &mut north_red, &mut north_yellow, &mut north_green,
             &mut south_red, &mut south_yellow, &mut south_green,
@@ -84,14 +119,6 @@ async fn main(_spawner: Spawner) {
             &mut west_red, &mut west_yellow, &mut west_green,
         ).await;
         Timer::after_secs(1).await;
-
-        // Back to North-South green
-        set_ns_green(
-            &mut north_red, &mut north_yellow, &mut north_green,
-            &mut south_red, &mut south_yellow, &mut south_green,
-            &mut east_red, &mut east_yellow, &mut east_green,
-            &mut west_red, &mut west_yellow, &mut west_green,
-        ).await;
     }
 }
 
@@ -108,13 +135,30 @@ async fn set_ns_green(
     wr.set_high();  wy.set_low();   wg.set_low();
 }
 
-// Helper: North-South yellow, East-West red
+// Helper: North-South red+yellow (German preparation phase), East-West red
+async fn set_ns_red_yellow(
+    nr: &mut Output<'_>, ny: &mut Output<'_>, ng: &mut Output<'_>,
+    sr: &mut Output<'_>, sy: &mut Output<'_>, sg: &mut Output<'_>,
+    er: &mut Output<'_>, ey: &mut Output<'_>, eg: &mut Output<'_>,
+    wr: &mut Output<'_>, wy: &mut Output<'_>, wg: &mut Output<'_>,
+) {
+    nr.set_high();  ny.set_high();  ng.set_low();
+    sr.set_high();  sy.set_high();  sg.set_low();
+    er.set_high();  ey.set_low();   eg.set_low();
+    wr.set_high();  wy.set_low();   wg.set_low();
+}
+
+// Helper: North-South yellow only, East-West red
 async fn set_ns_yellow(
     nr: &mut Output<'_>, ny: &mut Output<'_>, ng: &mut Output<'_>,
     sr: &mut Output<'_>, sy: &mut Output<'_>, sg: &mut Output<'_>,
+    er: &mut Output<'_>, ey: &mut Output<'_>, eg: &mut Output<'_>,
+    wr: &mut Output<'_>, wy: &mut Output<'_>, wg: &mut Output<'_>,
 ) {
     nr.set_low();   ny.set_high();  ng.set_low();
     sr.set_low();   sy.set_high();  sg.set_low();
+    er.set_high();  ey.set_low();   eg.set_low();
+    wr.set_high();  wy.set_low();   wg.set_low();
 }
 
 // Helper: East-West green, North-South red
@@ -130,13 +174,30 @@ async fn set_ew_green(
     sr.set_high();  sy.set_low();   sg.set_low();
 }
 
-// Helper: East-West yellow, North-South red
+// Helper: East-West red+yellow (German preparation phase), North-South red
+async fn set_ew_red_yellow(
+    er: &mut Output<'_>, ey: &mut Output<'_>, eg: &mut Output<'_>,
+    wr: &mut Output<'_>, wy: &mut Output<'_>, wg: &mut Output<'_>,
+    nr: &mut Output<'_>, ny: &mut Output<'_>, ng: &mut Output<'_>,
+    sr: &mut Output<'_>, sy: &mut Output<'_>, sg: &mut Output<'_>,
+) {
+    er.set_high();  ey.set_high();  eg.set_low();
+    wr.set_high();  wy.set_high();  wg.set_low();
+    nr.set_high();  ny.set_low();   ng.set_low();
+    sr.set_high();  sy.set_low();   sg.set_low();
+}
+
+// Helper: East-West yellow only, North-South red
 async fn set_ew_yellow(
     er: &mut Output<'_>, ey: &mut Output<'_>, eg: &mut Output<'_>,
     wr: &mut Output<'_>, wy: &mut Output<'_>, wg: &mut Output<'_>,
+    nr: &mut Output<'_>, ny: &mut Output<'_>, ng: &mut Output<'_>,
+    sr: &mut Output<'_>, sy: &mut Output<'_>, sg: &mut Output<'_>,
 ) {
     er.set_low();   ey.set_high();  eg.set_low();
     wr.set_low();   wy.set_high();  wg.set_low();
+    nr.set_high();  ny.set_low();   ng.set_low();
+    sr.set_high();  sy.set_low();   sg.set_low();
 }
 
 // Helper: All directions red (safety phase)
