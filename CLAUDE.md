@@ -34,12 +34,16 @@ cortex-m-rt = "0.7"
 ## Build and Development Commands
 
 ### Prerequisites
-Install required tools:
+Install required tools (one-time setup):
 ```bash
 # Ensure nightly toolchain is installed (automatic via rust-toolchain.toml)
 rustup target add thumbv6m-none-eabi --toolchain nightly
-cargo install probe-rs-tools
+
+# Install elf2uf2-rs for flashing via USB (BOOTSEL mode)
+cargo install elf2uf2-rs --locked
 ```
+
+**Note**: This project uses elf2uf2-rs for flashing via USB/BOOTSEL mode. probe-rs requires a hardware debug probe and is not needed for standard USB flashing.
 
 ### Build
 ```bash
@@ -47,13 +51,33 @@ cargo build --release
 ```
 
 ### Flash to Device
-```bash
-cargo run --release
-```
+
+**Using BOOTSEL Mode (Standard USB Connection):**
+
+1. **Enter BOOTSEL mode:**
+   - Disconnect the Pico
+   - Hold down the BOOTSEL button (white button on the board)
+   - While holding BOOTSEL, connect the USB cable
+   - Release BOOTSEL - the Pico should appear as a USB drive named "RPI-RP2"
+
+2. **Flash the program:**
+   ```bash
+   cargo run --release
+   ```
+
+3. **Expected output:**
+   ```
+   Found pico uf2 disk /Volumes/RPI-RP2
+   Transfering program to pico
+   35.50 KB / 35.50 KB [===================] 100.00 %
+   ```
+
+The Pico will automatically reboot and start running the program after flashing completes.
 
 ### Debug Build
 ```bash
 cargo build
+cargo run  # Flash debug build (with more logging)
 ```
 
 ## Architecture Notes
@@ -93,9 +117,11 @@ cargo build
 ## Project Structure
 
 - `src/main.rs` - Traffic light controller with 4-way intersection logic
-- `.cargo/config.toml` - Target configuration (thumbv6m-none-eabi) and probe-rs runner
+- `.cargo/config.toml` - Target configuration (thumbv6m-none-eabi) and elf2uf2-rs runner
 - `rust-toolchain.toml` - Specifies nightly Rust channel
 - `Cargo.toml` - Dependencies and project metadata
+- `memory.x` - Memory layout for RP2040 (2MB flash, 256KB RAM)
+- `build.rs` - Build script that makes memory.x available to the linker
 
 ## Traffic Light Implementation
 
