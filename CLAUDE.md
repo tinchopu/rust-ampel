@@ -20,9 +20,9 @@ This is an embedded Rust project targeting the Raspberry Pi Pico (RP2040) microc
 embassy-rp = { version = "0.9", features = ["defmt", "time-driver", "critical-section-impl", "rp2040"] }
 embassy-executor = { version = "0.9", features = ["nightly", "arch-cortex-m", "executor-thread"] }
 embassy-time = { version = "0.5", features = ["defmt", "defmt-timestamp-uptime", "tick-hz-1_000_000"] }
-defmt = "0.3"
-defmt-rtt = "0.4"
-panic-probe = { version = "0.3", features = ["print-defmt"] }
+defmt = "1.0"
+defmt-rtt = "1.0"
+panic-probe = { version = "1.0", features = ["print-defmt"] }
 cortex-m-rt = "0.7"
 ```
 
