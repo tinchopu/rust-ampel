@@ -34,5 +34,3 @@ Thumbs.db
 *.log
 .env
 .env.local
-
-Cargo.lock
