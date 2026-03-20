@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 embassy-rp = { version = "0.9", features = ["defmt", "time-driver", "critical-section-impl", "rp2040"] }
-embassy-executor = { version = "0.9", features = ["nightly", "arch-cortex-m", "executor-thread"] }
+embassy-executor = { version = "0.10", features = ["nightly", "arch-cortex-m", "executor-thread"] }
 embassy-time = { version = "0.5", features = ["defmt", "defmt-timestamp-uptime", "tick-hz-1_000_000"] }
 defmt = "1.0"
 defmt-rtt = "1.0"
